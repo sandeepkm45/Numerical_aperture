@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Numerical Aperture of Optical Fiber</title>
+
+    <link rel="stylesheet" href="style.css">
+    <!-- <style>
+        
+    </style> -->
+</head>
+
+<body>
+    <div class="header">
+        <h1>Numerical Aperture of Optical Fiber</h1>
+        <div class="header-icons">
+            <button id="help-btn">?</button>
+            <button id="fullscreen-btn">□</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- New description panel -->
+        <div class="description-panel">
+            <div class="description-header">
+                <h2>EXPERIMENT DESCRIPTION</h2>
+            </div>
+            <div class="description-content">
+                <h3>About the Experiment</h3>
+                <p>Numerical Aperture is a dimension-less quantity that describes the range of angles over which an optical fiber can accept or emit light. It's essentially a measure of the light-gathering ability of a fiber and is defined mathematically as:</p>
+                <p>NA = sin(θₘₐₓ) = √(n₁² - n₂²)</p>
+                <p>Where:
+                <ul>
+                    <li>θₘₐₓ is the maximum acceptance angle</li>
+                    <li>n₁ is the refractive index of the fiber core</li>
+                    <li>n₂ is the refractive index of the cladding</li>
+                </ul>
+                </p>
+
+                <h3>How to Perform the Experiment</h3>
+                <ol>
+                    <li><strong>Turn on the system</strong>:
+                        <ul>
+                            <li>Click the "SWITCH ON" toggle in the control panel to activate the laser source.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Select fiber type</strong>:
+                        <ul>
+                            <li>Choose between "Glass-Glass Fiber," "Plastic Fiber," or "Graded Index Fiber".</li>
+                            <li>Each fiber type has a different NA value:
+                                <ul>
+                                    <li>Glass-Glass: ~0.22</li>
+                                    <li>Plastic: ~0.30</li>
+                                    <li>Graded Index: ~0.25</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li><strong>Select laser wavelength</strong>:
+                        <ul>
+                            <li>Choose between red (650 nm), green (532 nm), or blue (450 nm) laser sources.</li>
+                            <li>Different wavelengths will affect the light intensity measurements.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Adjust detector position</strong>:
+                        <ul>
+                            <li>Use the Z-distance slider to adjust how far the detector is from the fiber end (1-10 mm).</li>
+                            <li>Use the X-distance slider to move the detector laterally (-5 to 5 mm).</li>
+                            <li>You can also use the up/down arrow buttons for fine adjustment of position.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Observe measurements</strong>:
+                        <ul>
+                            <li>The detector display shows the light intensity in microwatts (μW).</li>
+                            <li>The vernier reading shows the angle at which light is measured.</li>
+                            <li>Light rays show the cone of acceptance visually.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Determine the numerical aperture</strong>:
+                        <ul>
+                            <li>As you move the detector away from the central axis (increase X), you'll see the intensity drop.</li>
+                            <li>The angle at which the intensity falls to approximately 5% of the maximum value corresponds to the maximum acceptance angle.</li>
+                            <li>Record this angle (θₘₐₓ).</li>
+                            <li>Calculate NA = sin(θₘₐₓ).</li>
+                        </ul>
+                    </li>
+                    <li><strong>Compare different fibers</strong>:
+                        <ul>
+                            <li>Switch between fiber types to observe how the acceptance cone changes.</li>
+                            <li>Plastic fiber has the largest NA, visible by its wider cone of emitted light.</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <h3>Key Observations</h3>
+                <ol>
+                    <li>The intensity of light decreases as the detector moves away from the central axis.</li>
+                    <li>Each fiber type has a characteristic maximum acceptance angle.</li>
+                    <li>Outside the acceptance cone, light intensity drops dramatically.</li>
+                    <li>Light rays visually demonstrate the acceptance cone of the fiber.</li>
+                </ol>
+                
+                <p>This experiment helps you understand how different fiber materials and designs affect their light-gathering capabilities, which is crucial for applications in telecommunications, medical imaging, and sensors.</p>
+            </div>
+        </div>
+
+        <div class="simulation-area">
+            <div class="apparatus">
+                <div class="apparatus-top">
+                    <div class="left-setup">
+                        <div class="setup-image">
+                            <div class="laser-source"></div>
+                            <div class="laser-beam" id="laser-beam"></div>
+                            LASER SOURCE
+                        </div>
+                    </div>
+                    <div class="right-setup">
+                        <div class="setup-image">
+                            FIBER OPTIC SETUP
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detector-output">
+                    <div class="detector-display detector-off" id="intensity-display">0.00</div>
+                    <div class="detector-title">DETECTOR OUTPUT UNIT</div>
+                    <div class="detector-label">INTENSITY (µW)</div>
+                </div>
+
+                <div class="holder">
+                    <div class="fiber-hole">
+                        <div class="fiber" id="fiber-light"></div>
+                    </div>
+                </div>
+
+                <div class="vernier">
+                    <div class="vernier-scale">
+                        <div class="vernier-reading" id="vernier-reading">Angle: 0.0°</div>
+                    </div>
+                </div>
+
+                <div class="arrows">
+                    <div class="arrow up-arrow" id="up-btn"></div>
+                    <div class="arrow down-arrow" id="down-btn"></div>
+                </div>
+
+                <div id="light-rays-container"></div>
+
+                <div class="graph-container" id="graph-container">
+                    <div class="graph-header">Intensity vs. Angle</div>
+                    <div class="graph-content">
+                        <canvas id="graph-canvas" class="graph-canvas"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="control-header">
+                <h2>VARIABLES</h2>
+                <div class="dropdown" id="panel-toggle">▼</div>
+            </div>
+            <div class="control-content">
+                <div class="power-switch">
+                    <label>SWITCH ON</label>
+                    <label class="switch">
+                        <input type="checkbox" id="power-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Select Fiber</label>
+                    <select id="fiber-select">
+                        <option value="glass-glass">Glass - Glass Fiber</option>
+                        <option value="plastic">Plastic Fiber</option>
+                        <option value="graded">Graded Index Fiber</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Select Laser</label>
+                    <select id="laser-select">
+                        <option value="red">Red (650 nm)</option>
+                        <option value="green">Green (532 nm)</option>
+                        <option value="blue">Blue (450 nm)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Detector Distance (Z) mm: <span id="z-value"
+                            class="value-display">2.0</span></label>
+                    <input type="range" id="z-distance" min="1" max="10" value="2" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Detector Distance (X) mm: <span id="x-value"
+                            class="value-display">0.0</span></label>
+                    <input type="range" id="x-distance" min="-5" max="5" value="0" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <div class="radio-option">
+                        <input type="radio" id="vernier-reading-radio" name="display-option" checked>
+                        <label for="vernier-reading-radio">Show Vernier Reading</label>
+                    </div>
+
+                    <button class="reset-btn" id="reset-btn">RESET</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="help-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Help - Numerical Aperture Simulation</h2>
+                    <span class="close-btn" id="close-help">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <h3>About Numerical Aperture</h3>
+                    <p>Numerical Aperture (NA) is a dimensionless quantity that describes the range of angles over which
+                        an optical fiber can accept or emit light. It's a measure of the light-gathering ability of an
+                        optical fiber.</p>
+
+                    <h3>How to use this simulation</h3>
+                    <ul>
+                        <li>Toggle the power switch to turn the laser on/off</li>
+                        <li>Select different fiber types to observe varying numerical apertures</li>
+                        <li>Choose different laser colors (wavelengths)</li>
+                        <li>Adjust the detector position (X,Z) to measure light intensity at various angles</li>
+                        <li>Use the up/down arrows to fine-tune the detector position</li>
+                        <li>View either the vernier reading or the intensity vs. angle graph</li>
+                    </ul>
+
+                    <h3>Theoretical Background</h3>
+                    <p>The numerical aperture of a fiber is defined as:</p>
+                    <p>NA = sin(θₘₐₓ) = √(n₁² - n₂²)</p>
+                    <p>Where θₘₐₓ is the maximum acceptance angle, n₁ is the refractive index of the core, and n₂ is the
+                        refractive index of the cladding.</p>
+
+                    <h3>Typical NA values:</h3>
+                    <ul>
+                        <li>Glass-Glass Fiber: ~0.22</li>
+                        <li>Plastic Fiber: ~0.30</li>
+                        <li>Graded Index Fiber: ~0.25</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <script src="script.js"></script>
+        <!-- <script>
+            
+        </script> -->
+</body>
+
+</html>
