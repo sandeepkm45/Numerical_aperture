@@ -11,53 +11,137 @@ document.addEventListener('DOMContentLoaded', function () {
     let graphData = [];
     let maxIntensity = 100;
 
-    // DOM elements
-    const powerToggle = document.getElementById('power-toggle');
-    const fiberSelect = document.getElementById('fiber-select');
-    const laserSelect = document.getElementById('laser-select');
-    const zDistance = document.getElementById('z-distance');
-    const xDistance = document.getElementById('x-distance');
-    const vernierRadio = document.getElementById('vernier-reading-radio');
-    const graphRadio = document.getElementById('graph-radio');
-    const resetBtn = document.getElementById('reset-btn');
-    const intensityDisplay = document.getElementById('intensity-display');
-    const zValue = document.getElementById('z-value');
-    const xValue = document.getElementById('x-value');
-    const upBtn = document.getElementById('up-btn');
-    const downBtn = document.getElementById('down-btn');
-    const laserBeam = document.getElementById('laser-beam');
-    const fiberLight = document.getElementById('fiber-light');
-    const vernierReadingDisplay = document.getElementById('vernier-reading');
-    const graphContainer = document.getElementById('graph-container');
-    const graphCanvas = document.getElementById('graph-canvas');
-    const ctx = graphCanvas.getContext('2d');
-    const helpBtn = document.getElementById('help-btn');
-    const helpModal = document.getElementById('help-modal');
-    const closeHelp = document.getElementById('close-help');
-    const fullscreenBtn = document.getElementById('fullscreen-btn');
-    const panelToggle = document.getElementById('panel-toggle');
-    const lightRaysContainer = document.getElementById('light-rays-container');
+    // DOM elements - using more reliable selectors to find buttons even if IDs change
+    const powerToggle = document.getElementById('power-toggle') || document.querySelector('input[type="checkbox"][name="power"]');
+    const fiberSelect = document.getElementById('fiber-select') || document.querySelector('select[name="fiber-type"]');
+    const laserSelect = document.getElementById('laser-select') || document.querySelector('select[name="laser-color"]');
+    const zDistance = document.getElementById('z-distance') || document.querySelector('input[type="range"][name="z-pos"]');
+    const xDistance = document.getElementById('x-distance') || document.querySelector('input[type="range"][name="x-pos"]');
+    const vernierRadio = document.getElementById('vernier-reading-radio') || document.querySelector('input[type="radio"][name="display"][value="vernier"]');
+    const graphRadio = document.getElementById('graph-radio') || document.querySelector('input[type="radio"][name="display"][value="graph"]');
+    const resetBtn = document.getElementById('reset-btn') || document.querySelector('button.reset');
+    const intensityDisplay = document.getElementById('intensity-display') || document.querySelector('.intensity-value');
+    const zValue = document.getElementById('z-value') || document.querySelector('.z-value-display');
+    const xValue = document.getElementById('x-value') || document.querySelector('.x-value-display');
+
+    // Button elements with multiple fallback selectors
+    const upBtn = document.getElementById('up-btn') || document.querySelector('.up-button') || document.querySelector('button[data-direction="up"]');
+    const downBtn = document.getElementById('down-btn') || document.querySelector('.down-button') || document.querySelector('button[data-direction="down"]');
+    const forwardBtn = document.getElementById('forward-btn') || document.querySelector('.forward-button') || document.querySelector('button[data-direction="forward"]');
+    const backBtn = document.getElementById('back-btn') || document.querySelector('.back-button') || document.querySelector('button[data-direction="back"]');
+
+    const laserBeam = document.getElementById('laser-beam') || document.querySelector('.laser-beam');
+    const fiberLight = document.getElementById('fiber-light') || document.querySelector('.fiber-light');
+    const vernierReadingDisplay = document.getElementById('vernier-reading') || document.querySelector('.vernier-display');
+    const graphContainer = document.getElementById('graph-container') || document.querySelector('.graph-container');
+    const graphCanvas = document.getElementById('graph-canvas') || document.querySelector('canvas.graph');
+    const ctx = graphCanvas ? graphCanvas.getContext('2d') : null;
+    const helpBtn = document.getElementById('help-btn') || document.querySelector('.help-button');
+    const helpModal = document.getElementById('help-modal') || document.querySelector('.help-modal');
+    const closeHelp = document.getElementById('close-help') || document.querySelector('.close-help');
+    const fullscreenBtn = document.getElementById('fullscreen-btn') || document.querySelector('.fullscreen-button');
+    const panelToggle = document.getElementById('panel-toggle') || document.querySelector('.panel-toggle');
+    const lightRaysContainer = document.getElementById('light-rays-container') || document.querySelector('.light-rays');
+
+    // Check if required elements are missing and create them if needed
+    function createMissingElements() {
+        // Create buttons if they don't exist
+        if (!upBtn) {
+            const newUpBtn = document.createElement('button');
+            newUpBtn.id = 'up-btn';
+            newUpBtn.textContent = 'Up (X+)';
+            newUpBtn.className = 'control-button up-button';
+
+            // Find a good place to append this button
+            const controlPanel = document.querySelector('.controls') || document.body;
+            controlPanel.appendChild(newUpBtn);
+
+            // Update our reference
+            window.upBtn = newUpBtn;
+        }
+
+        if (!downBtn) {
+            const newDownBtn = document.createElement('button');
+            newDownBtn.id = 'down-btn';
+            newDownBtn.textContent = 'Down (X-)';
+            newDownBtn.className = 'control-button down-button';
+
+            const controlPanel = document.querySelector('.controls') || document.body;
+            controlPanel.appendChild(newDownBtn);
+
+            window.downBtn = newDownBtn;
+        }
+
+        if (!forwardBtn) {
+            const newForwardBtn = document.createElement('button');
+            newForwardBtn.id = 'forward-btn';
+            newForwardBtn.textContent = 'Forward (Z+)';
+            newForwardBtn.className = 'control-button forward-button';
+
+            const controlPanel = document.querySelector('.controls') || document.body;
+            controlPanel.appendChild(newForwardBtn);
+
+            window.forwardBtn = newForwardBtn;
+        }
+
+        if (!backBtn) {
+            const newBackBtn = document.createElement('button');
+            newBackBtn.id = 'back-btn';
+            newBackBtn.textContent = 'Back (Z-)';
+            newBackBtn.className = 'control-button back-button';
+
+            const controlPanel = document.querySelector('.controls') || document.body;
+            controlPanel.appendChild(newBackBtn);
+
+            window.backBtn = newBackBtn;
+        }
+
+        // Re-get all elements to ensure we have the new ones
+        return {
+            upBtn: document.getElementById('up-btn') || document.querySelector('.up-button'),
+            downBtn: document.getElementById('down-btn') || document.querySelector('.down-button'),
+            forwardBtn: document.getElementById('forward-btn') || document.querySelector('.forward-button'),
+            backBtn: document.getElementById('back-btn') || document.querySelector('.back-button')
+        };
+    }
 
     // Create light rays
     function createLightRays() {
-        // Clear existing rays
-        lightRaysContainer.innerHTML = '';
+        // If container doesn't exist, try to create it
+        if (!lightRaysContainer) {
+            const newContainer = document.createElement('div');
+            newContainer.id = 'light-rays-container';
+            newContainer.className = 'light-rays';
 
-        // Create rays with different angles
-        for (let i = -30; i <= 30; i += 5) {
-            const ray = document.createElement('div');
-            ray.className = 'light-ray';
-            ray.style.left = '350px';
-            ray.style.top = '200px';
-            ray.style.width = '300px';
-            ray.style.transform = `rotate(${i}deg)`;
-            lightRaysContainer.appendChild(ray);
+            // Append to some sensible parent
+            const simulationArea = document.querySelector('.simulation-area') || document.body;
+            simulationArea.appendChild(newContainer);
+
+            lightRaysContainer = newContainer;
+        }
+
+        // Clear existing rays
+        if (lightRaysContainer) {
+            lightRaysContainer.innerHTML = '';
+
+            // Create rays with different angles
+            for (let i = -30; i <= 30; i += 5) {
+                const ray = document.createElement('div');
+                ray.className = 'light-ray';
+                ray.style.left = '350px';
+                ray.style.top = '200px';
+                ray.style.width = '300px';
+                ray.style.transform = `rotate(${i}deg)`;
+                lightRaysContainer.appendChild(ray);
+            }
         }
     }
 
     // Update light rays visibility
     function updateLightRays() {
-        const rays = document.querySelectorAll('.light-ray');
+        if (!lightRaysContainer) return;
+
+        const rays = lightRaysContainer.querySelectorAll('.light-ray');
         const maxNA = getFiberNA();
         const maxAngle = Math.asin(maxNA) * (180 / Math.PI);
 
@@ -90,6 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Calculate intensity based on fiber, angle, etc.
+    // Calculate intensity based on fiber, angle, etc.
     function calculateIntensity() {
         if (!powerOn) return 0;
 
@@ -111,6 +196,11 @@ document.addEventListener('DOMContentLoaded', function () {
             result = maxIntensity * 0.05 * Math.exp(-(angle - maxAngle) / 3);
         }
 
+        // Apply inverse square law for distance (z-axis)
+        // Use a reference distance of 1.0 for normalization
+        const referenceDistance = 1.0;
+        result *= Math.pow(referenceDistance / detectorZ, 2);
+
         // Apply wavelength effect
         switch (laserColor) {
             case 'red': result *= 1.0; break;
@@ -126,11 +216,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Update the graph
     function updateGraph() {
-        if (!graphCanvas) return;
+        if (!graphCanvas || !ctx) return;
 
         // Set canvas size
-        graphCanvas.width = graphCanvas.offsetWidth;
-        graphCanvas.height = graphCanvas.offsetHeight;
+        graphCanvas.width = graphCanvas.offsetWidth || 400;
+        graphCanvas.height = graphCanvas.offsetHeight || 300;
 
         const width = graphCanvas.width;
         const height = graphCanvas.height;
@@ -236,41 +326,52 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateUI() {
         // Update intensity display
         intensity = calculateIntensity();
-        intensityDisplay.textContent = intensity.toFixed(2);
-        intensityDisplay.classList.toggle('detector-off', !powerOn);
-        intensityDisplay.classList.toggle('detector-powered', powerOn);
+
+        if (intensityDisplay) {
+            intensityDisplay.textContent = intensity.toFixed(2);
+            intensityDisplay.classList.toggle('detector-off', !powerOn);
+            intensityDisplay.classList.toggle('detector-powered', powerOn);
+        }
 
         // Update fiber light
-        fiberLight.classList.toggle('powered', powerOn);
+        if (fiberLight) {
+            fiberLight.classList.toggle('powered', powerOn);
+        }
 
         // Update laser beam
-        laserBeam.classList.toggle('powered', powerOn);
+        if (laserBeam) {
+            laserBeam.classList.toggle('powered', powerOn);
 
-        // Change laser color
-        switch (laserColor) {
-            case 'red':
-                laserBeam.style.backgroundColor = '#f00';
-                laserBeam.style.boxShadow = '0 0 10px rgba(255,0,0,0.7)';
-                fiberLight.style.backgroundColor = '#f55';
-                break;
-            case 'green':
-                laserBeam.style.backgroundColor = '#0f0';
-                laserBeam.style.boxShadow = '0 0 10px rgba(0,255,0,0.7)';
-                fiberLight.style.backgroundColor = '#5f5';
-                break;
-            case 'blue':
-                laserBeam.style.backgroundColor = '#00f';
-                laserBeam.style.boxShadow = '0 0 10px rgba(0,0,255,0.7)';
-                fiberLight.style.backgroundColor = '#55f';
-                break;
+            // Change laser color
+            switch (laserColor) {
+                case 'red':
+                    laserBeam.style.backgroundColor = '#f00';
+                    laserBeam.style.boxShadow = '0 0 10px rgba(255,0,0,0.7)';
+                    if (fiberLight) fiberLight.style.backgroundColor = '#f55';
+                    break;
+                case 'green':
+                    laserBeam.style.backgroundColor = '#0f0';
+                    laserBeam.style.boxShadow = '0 0 10px rgba(0,255,0,0.7)';
+                    if (fiberLight) fiberLight.style.backgroundColor = '#5f5';
+                    break;
+                case 'blue':
+                    laserBeam.style.backgroundColor = '#00f';
+                    laserBeam.style.boxShadow = '0 0 10px rgba(0,0,255,0.7)';
+                    if (fiberLight) fiberLight.style.backgroundColor = '#55f';
+                    break;
+            }
         }
 
         // Update vernier reading
-        vernierReadingDisplay.textContent = `Angle: ${angle.toFixed(1)}°`;
-        vernierReadingDisplay.classList.toggle('visible', showVernier && powerOn);
+        if (vernierReadingDisplay) {
+            vernierReadingDisplay.textContent = `Angle: ${angle.toFixed(1)}°`;
+            vernierReadingDisplay.classList.toggle('visible', showVernier && powerOn);
+        }
 
         // Update graph visibility
-        graphContainer.classList.toggle('visible', !showVernier && powerOn);
+        if (graphContainer) {
+            graphContainer.classList.toggle('visible', !showVernier && powerOn);
+        }
 
         // Update light rays
         updateLightRays();
@@ -293,6 +394,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             updateGraph();
         }
+
+        // Update display values
+        if (zValue) zValue.textContent = detectorZ.toFixed(1);
+        if (xValue) xValue.textContent = detectorX.toFixed(1);
+
+        // Update sliders to match the current values
+        if (zDistance) zDistance.value = detectorZ;
+        if (xDistance) xDistance.value = detectorX;
     }
 
     // Handle changes to detector position
@@ -308,13 +417,13 @@ document.addEventListener('DOMContentLoaded', function () {
         detectorX = newX;
         detectorZ = newZ;
 
-        // Update sliders
-        xDistance.value = newX;
-        zDistance.value = newZ;
-
         // Update display values
-        xValue.textContent = newX.toFixed(1);
-        zValue.textContent = newZ.toFixed(1);
+        if (xValue) xValue.textContent = newX.toFixed(1);
+        if (zValue) zValue.textContent = newZ.toFixed(1);
+
+        // Update sliders
+        if (xDistance) xDistance.value = newX;
+        if (zDistance) zDistance.value = newZ;
 
         updateUI();
     }
@@ -330,115 +439,185 @@ document.addEventListener('DOMContentLoaded', function () {
         graphData = [];
 
         // Reset UI elements
-        powerToggle.checked = false;
-        fiberSelect.value = 'glass-glass';
-        laserSelect.value = 'red';
-        zDistance.value = 2;
-        xDistance.value = 0;
-        vernierRadio.checked = true;
-        graphRadio.checked = false;
-
-        // Update display values
-        zValue.textContent = '2.0';
-        xValue.textContent = '0.0';
+        if (powerToggle) powerToggle.checked = false;
+        if (fiberSelect) fiberSelect.value = 'glass-glass';
+        if (laserSelect) laserSelect.value = 'red';
+        if (zDistance) zDistance.value = 2;
+        if (xDistance) xDistance.value = 0;
+        if (vernierRadio) vernierRadio.checked = true;
+        if (graphRadio) graphRadio.checked = false;
 
         updateUI();
     }
 
     // Initialize the simulation
     function init() {
+        // Create missing elements if needed
+        const buttons = createMissingElements();
+
         // Create light rays
         createLightRays();
 
-        // Set up event listeners
-        powerToggle.addEventListener('change', function () {
-            powerOn = this.checked;
-            updateUI();
-        });
-
-        fiberSelect.addEventListener('change', function () {
-            fiberType = this.value;
-            updateUI();
-        });
-
-        laserSelect.addEventListener('change', function () {
-            laserColor = this.value;
-            updateUI();
-        });
-
-        zDistance.addEventListener('input', function () {
-            detectorZ = parseFloat(this.value);
-            zValue.textContent = detectorZ.toFixed(1);
-            updateUI();
-        });
-
-        xDistance.addEventListener('input', function () {
-            detectorX = parseFloat(this.value);
-            xValue.textContent = detectorX.toFixed(1);
-            updateUI();
-        });
-
-        vernierRadio.addEventListener('change', function () {
-            if (this.checked) {
-                showVernier = true;
+        // Set up event listeners with safety checks
+        if (powerToggle) {
+            powerToggle.addEventListener('click', function () {
+                powerOn = this.checked;
                 updateUI();
-            }
-        });
+            });
+        }
 
-        graphRadio.addEventListener('change', function () {
-            if (this.checked) {
-                showVernier = false;
+        if (fiberSelect) {
+            fiberSelect.addEventListener('change', function () {
+                fiberType = this.value;
                 updateUI();
-            }
-        });
+            });
+        }
 
-        resetBtn.addEventListener('click', resetSimulation);
+        if (laserSelect) {
+            laserSelect.addEventListener('change', function () {
+                laserColor = this.value;
+                updateUI();
+            });
+        }
 
-        upBtn.addEventListener('click', function () {
-            updateDetectorPosition(0.1, 0);
-        });
+        if (zDistance) {
+            zDistance.addEventListener('input', function () {
+                detectorZ = parseFloat(this.value);
+                updateUI();
+            });
+        }
 
-        downBtn.addEventListener('click', function () {
-            updateDetectorPosition(-0.1, 0);
-        });
+        if (xDistance) {
+            xDistance.addEventListener('input', function () {
+                detectorX = parseFloat(this.value);
+                updateUI();
+            });
+        }
 
-        helpBtn.addEventListener('click', function () {
-            helpModal.style.display = 'flex';
-        });
-
-        closeHelp.addEventListener('click', function () {
-            helpModal.style.display = 'none';
-        });
-
-        fullscreenBtn.addEventListener('click', function () {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
-                });
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
+        if (vernierRadio) {
+            vernierRadio.addEventListener('change', function () {
+                if (this.checked) {
+                    showVernier = true;
+                    updateUI();
                 }
-            }
-        });
+            });
+        }
 
-        panelToggle.addEventListener('click', function () {
-            const controlContent = document.querySelector('.control-content');
-            if (controlContent.style.display === 'none') {
-                controlContent.style.display = 'block';
-                this.textContent = '▼';
-            } else {
-                controlContent.style.display = 'none';
-                this.textContent = '▲';
+        if (graphRadio) {
+            graphRadio.addEventListener('change', function () {
+                if (this.checked) {
+                    showVernier = false;
+                    updateUI();
+                }
+            });
+        }
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', resetSimulation);
+        }
+
+        // X-axis buttons - using the possibly newly created buttons
+        const upButton = buttons.upBtn || upBtn;
+        if (upButton) {
+            // Remove any existing event listeners to prevent duplicates
+            const newUpBtn = upButton.cloneNode(true);
+            if (upButton.parentNode) {
+                upButton.parentNode.replaceChild(newUpBtn, upButton);
             }
-        });
+
+            newUpBtn.addEventListener('click', function () {
+                updateDetectorPosition(0.1, 0);
+                console.log("Up button clicked, X:", detectorX, "Z:", detectorZ);
+            });
+        }
+
+        const downButton = buttons.downBtn || downBtn;
+        if (downButton) {
+            const newDownBtn = downButton.cloneNode(true);
+            if (downButton.parentNode) {
+                downButton.parentNode.replaceChild(newDownBtn, downButton);
+            }
+
+            newDownBtn.addEventListener('click', function () {
+                updateDetectorPosition(-0.1, 0);
+                console.log("Down button clicked, X:", detectorX, "Z:", detectorZ);
+            });
+        }
+
+        // Z-axis buttons
+        const forwardButton = buttons.forwardBtn || forwardBtn;
+        if (forwardButton) {
+            const newForwardBtn = forwardButton.cloneNode(true);
+            if (forwardButton.parentNode) {
+                forwardButton.parentNode.replaceChild(newForwardBtn, forwardButton);
+            }
+
+            newForwardBtn.addEventListener('click', function () {
+                updateDetectorPosition(0, 0.1);
+                console.log("Forward button clicked, X:", detectorX, "Z:", detectorZ);
+            });
+        }
+
+        const backButton = buttons.backBtn || backBtn;
+        if (backButton) {
+            const newBackBtn = backButton.cloneNode(true);
+            if (backButton.parentNode) {
+                backButton.parentNode.replaceChild(newBackBtn, backButton);
+            }
+
+            newBackBtn.addEventListener('click', function () {
+                updateDetectorPosition(0, -0.1);
+                console.log("Back button clicked, X:", detectorX, "Z:", detectorZ);
+            });
+        }
+
+        if (helpBtn && helpModal && closeHelp) {
+            helpBtn.addEventListener('click', function () {
+                helpModal.style.display = 'flex';
+            });
+
+            closeHelp.addEventListener('click', function () {
+                helpModal.style.display = 'none';
+            });
+        }
+
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', function () {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            });
+        }
+
+        if (panelToggle) {
+            panelToggle.addEventListener('click', function () {
+                const controlContent = document.querySelector('.control-content');
+                if (controlContent) {
+                    if (controlContent.style.display === 'none') {
+                        controlContent.style.display = 'block';
+                        this.textContent = '▼';
+                    } else {
+                        controlContent.style.display = 'none';
+                        this.textContent = '▲';
+                    }
+                }
+            });
+        }
 
         // Close modal when clicking outside
-        window.addEventListener('click', function (event) {
-            if (event.target === helpModal) {
-                helpModal.style.display = 'none';
-            }
-        });
+        if (helpModal) {
+            window.addEventListener('click', function (event) {
+                if (event.target === helpModal) {
+                    helpModal.style.display = 'none';
+                }
+            });
+        }
 
         // Handle window resize
         window.addEventListener('resize', function () {
@@ -449,8 +628,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Initial UI update
         updateUI();
+
+        console.log("Simulation initialized");
+        console.log("Button references:", {
+            upBtn: buttons.upBtn || upBtn,
+            downBtn: buttons.downBtn || downBtn,
+            forwardBtn: buttons.forwardBtn || forwardBtn,
+            backBtn: buttons.backBtn || backBtn
+        });
     }
 
+    // Add debugging to help identify any issues
+    console.log("DOM ready, starting simulation setup");
+
     // Start the simulation
-    init();
+    try {
+        init();
+    } catch (error) {
+        console.error("Error initializing simulation:", error);
+    }
 });
