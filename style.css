@@ -271,6 +271,24 @@ input[type="range"]::-webkit-slider-thumb {
     margin-right: 10px;
 }
 
+.btn {
+    background-color: #4b9cf5;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: block;
+    margin: 10px 0;
+    font-weight: bold;
+    transition: background-color 0.3s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn:hover {
+    background-color: #3a7cd0;
+}
+
 .reset-btn {
     background-color: #e74c3c;
     color: white;
@@ -647,4 +665,9 @@ input[type="range"]::-webkit-slider-thumb {
     display: inline-block;
     min-width: 30px;
     text-align: right;
+}
+
+.display-options {
+    display: flex;
+    gap: 10px;
 }
